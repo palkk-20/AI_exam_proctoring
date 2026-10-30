@@ -4,7 +4,7 @@ An enterprise-ready, intelligent automated exam proctoring system powered by **C
 
 ---
 
-## 🌟 Key Features (मुख्य विशेषताएँ)
+## 🌟 Key Features 
 
 ### 1. 👁️ Real-time Computer Vision & Face Tracking
 - **Multi-Face Detection**: Identifies when a secondary person enters the candidate's camera frame and triggers a critical warning.
@@ -33,7 +33,7 @@ An enterprise-ready, intelligent automated exam proctoring system powered by **C
 
 ---
 
-## 🏗️ Project Architecture (प्रोजेक्ट संरचना)
+## 🏗️ Project Architecture 
 
 ```text
 ai_exam_proctoring/
@@ -68,7 +68,7 @@ ai_exam_proctoring/
 
 ---
 
-## 🚀 How to Run the Project (प्रोजेक्ट कैसे चलाएं)
+## 🚀 How to Run the Project
 
 ### 1. Requirements
 - Python 3.10+ (tested on Python 3.14)
@@ -96,7 +96,7 @@ uvicorn app.main:app --reload --port 8000
 
 ---
 
-## 🧪 Testing the AI Proctoring System (सिस्टम को टेस्ट कैसे करें)
+## 🧪 Testing the AI Proctoring System 
 
 1. Open [http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin) in one browser tab or window (Proctor view).
 2. Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in another window or in an incognito window:
@@ -114,3 +114,17 @@ uvicorn app.main:app --reload --port 8000
    - See the real-time live alert ticker flash with the new incident.
    - Click **"Audit Session"** to view timestamped photo evidence snapshots and candidate metrics.
 5. Finish and submit the exam &rarr; Inspect the comprehensive **Integrity Audit Report & Certificate**.
+
+## Screenshots
+
+<img width="1440" height="900" alt="01_landing_student_login" src="https://github.com/user-attachments/assets/4f0dfb68-2de5-4511-8b3f-722e367d92eb" />
+<img width="1440" height="900" alt="02_landing_invigilator_login" src="https://github.com/user-attachments/assets/71bd117d-2bcc-4dc2-a4ea-b4057487077f" />
+<img width="1440" height="900" alt="10_exam_room" src="https://github.com/user-attachments/assets/427afb29-e170-4d18-a2fa-20679d98d2b1" />
+<img width="1440" height="1845" alt="09_result_integrity_report" src="https://github.com/user-attachments/assets/65967229-305d-4e6a-bc0c-d188cbc7abb5" />
+<img width="1440" height="900" alt="08_admin_incident_log" src="https://github.com/user-attachments/assets/847dd547-4fcd-4bd1-aca8-2bb5022ab5ab" />
+<img width="1440" height="900" alt="07_admin_candidates" src="https://github.com/user-attachments/assets/53598315-d95c-4b16-af0b-21540963cb5a" />
+<img width="1440" height="900" alt="06_admin_question_bank" src="https://github.com/user-attachments/assets/e9e0c1e6-8dd1-444b-946b-29664b252896" />
+<img width="1440" height="900" alt="05_admin_session_audit_modal" src="https://github.com/user-attachments/assets/b6081c3b-8e18-43ea-a29a-bcf0809a71a1" />
+<img width="1440" height="900" alt="04_admin_live_monitoring" src="https://github.com/user-attachments/assets/9e2bbd01-1804-4a33-aa90-873ef632741f" />
+<img width="1440" height="900" alt="03_system_check" src="https://github.com/user-attachments/assets/3ffe4c5e-4740-44cb-a0c6-1df49bf417c7" />
+
