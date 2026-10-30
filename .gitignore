@@ -1,0 +1,21 @@
+# Sensitive database
+**/data/proctor.db
+
+# Webcam evidence
+**/data/snapshots/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+.venv/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Editor settings
+.vscode/
