@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Online Exam - SentinelAI Proctor</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+  <script>
+    window.SESSION_ID = "{{ session_id }}";
+  </script>
+</head>
+<body style="user-select: none; background:#f8fafc;">
+
+  <!-- Exam Navbar (Proctor365 Clean Style) -->
+  <nav class="exam-navbar">
+    <div class="exam-brand">
+      <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #7c3aed, #6366f1); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.1rem;">
+        🛡️
+      </div>
+      <span>ONLINE EXAM</span>
+    </div>
+
+    <!-- Center Timer -->
+    <div class="exam-timer-pill">
+      <span>⏱️</span>
+      <span style="color:#64748b;">Time Left:</span>
+      <span id="exam-timer" style="color:#7c3aed; font-family:monospace; font-size:1.1rem;">10:00</span>
+    </div>
+
+    <!-- Right Actions -->
+    <div style="display:flex; align-items:center; gap:1rem;">
+      <span id="session-candidate-badge" class="badge-clean badge-blue" style="font-size:0.85rem;">
+        Candidate: Active
+      </span>
+      <button id="submit-exam-btn" class="btn" style="background:#7c3aed; color:#fff; padding:0.55rem 1.4rem; border-radius:8px; font-weight:700; box-shadow:0 4px 12px rgba(124,58,237,0.3);">
+        Submit Exam
+      </button>
+    </div>
+  </nav>
+
+  <!-- Exam Main Grid -->
+  <main class="exam-body-grid">
+    <!-- Left Side: Test Questions (Matches User Reference Image 4) -->
+    <div class="questions-container-card">
+      <div class="questions-card-header">
+        <div>
+          <h3>TEST QUESTIONS</h3>
+          <span id="question-category" style="font-size:0.85rem; color:#64748b;">General & Computer Science</span>
+        </div>
+        <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Standard Assessment</span>
+      </div>
+
+      <!-- Question Title -->
+      <h2 id="question-title" class="question-text-heading">
+        Loading assessment questions...
+      </h2>
+
+      <!-- Radio Options -->
+      <div id="options-list" style="margin-bottom: 2rem;">
+        <!-- Injected dynamically by exam.js -->
+      </div>
+
+      <!-- Controls Bottom -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:1.5rem; border-top:1px solid var(--border-light);">
+        <button id="prev-btn" class="btn" style="background:#e2e8f0; color:#334155; padding:0.6rem 1.25rem; font-size:0.9rem;" disabled>
+          &larr; Previous
+        </button>
+
+        <button id="next-btn" class="btn" style="background:#7c3aed; color:#fff; padding:0.6rem 1.5rem; font-size:0.9rem;">
+          Next &rarr;
+        </button>
+      </div>
+
+      <!-- Question Palette -->
+      <div style="margin-top: 1.5rem; border-top:1px solid var(--border-light); padding-top: 1rem;">
+        <div style="font-size:0.82rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:0.6rem;">
+          Question Navigator:
+        </div>
+        <div id="q-nav-grid" class="question-nav-grid" style="grid-template-columns: repeat(10, 1fr); max-width: 450px;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Side: Proctoring Webcam & Sensor Checklist (Matches User Reference Image 4) -->
+    <div class="exam-proctor-sidebar">
+      <!-- Live Webcam Feed Card -->
+      <div class="webcam-card">
+        <div id="camera-container" class="video-frame-box">
+          <video id="webcam-video" autoplay playsinline muted></video>
+          <canvas id="overlay-canvas"></canvas>
+          <div class="hud-overlay">
+            <div class="live-indicator">
+              <div class="live-dot"></div>
+              <span>PROCTOR LIVE</span>
+            </div>
+            <span id="face-tracking-status" style="font-size:0.75rem; background:rgba(0,0,0,0.6); color:#34d399; padding:0.2rem 0.5rem; border-radius:4px; font-weight:700;">
+              Face Verified
+            </span>
+          </div>
+        </div>
+
+        <!-- Integrity Score Bar -->
+        <div style="margin-top: 1rem;">
+          <div style="display:flex; justify-content:space-between; font-size:0.85rem; font-weight:700; margin-bottom:0.4rem;">
+            <span style="color:#475569;">Integrity Index</span>
+            <span id="integrity-score" style="color:#10b981;">100%</span>
+          </div>
+          <div style="height:8px; background:#e2e8f0; border-radius:20px; overflow:hidden;">
+            <div id="integrity-fill" style="height:100%; width:100%; background:#10b981; transition:width 0.3s;"></div>
+          </div>
+        </div>
+
+        <!-- Audio Sensitivity Meter -->
+        <div style="margin-top: 0.75rem;">
+          <div style="display:flex; justify-content:space-between; font-size:0.78rem; color:#64748b; margin-bottom:0.25rem;">
+            <span>Acoustic Monitor</span>
+            <span style="color:#10b981;">Normal</span>
+          </div>
+          <div style="height:6px; background:#e2e8f0; border-radius:20px; overflow:hidden;">
+            <div id="audio-bar-fill" style="height:100%; width:0%; background:#7c3aed; transition:width 0.08s;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Proctoring Checklist Card (Proctor365 Signature Look) -->
+      <div class="proctoring-checklist-card">
+        <div class="checklist-title">PROCTORING STATUS</div>
+        
+        <div class="checklist-row">
+          <div class="check-icon">✓</div>
+          <span>Webcam Surveillance Active</span>
+        </div>
+
+        <div class="checklist-row">
+          <div class="check-icon">✓</div>
+          <span>Microphone Input Monitoring</span>
+        </div>
+
+        <div class="checklist-row">
+          <div class="check-icon">✓</div>
+          <span>AI Facial & Gaze Tracking</span>
+        </div>
+
+        <div class="checklist-row">
+          <div class="check-icon">✓</div>
+          <span>Fullscreen Sandbox Locked</span>
+        </div>
+
+        <div class="checklist-row" style="color:#94a3b8; font-size:0.85rem; margin-top:0.75rem; border-top:1px solid #f1f5f9; padding-top:0.75rem;">
+          <span>Security Protocol: <strong>Automated AI</strong></span>
+        </div>
+      </div>
+
+      <!-- Security Activity Log -->
+      <div class="incident-feed" style="background:#fff; border:1px solid var(--border-light); max-height:180px;">
+        <h4 style="font-size:0.8rem; color:#64748b; font-weight:800; margin-bottom:0.5rem;">SESSION SECURITY LOG</h4>
+        <div id="incident-list">
+          <div class="incident-item" style="color:#64748b; font-size:0.8rem;">
+            AI monitoring activated. All actions logged.
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Fullscreen Exit Warning Modal -->
+  <div id="fullscreen-modal" class="modal-overlay">
+    <div class="modal-content" style="text-align:center;">
+      <div style="font-size: 3rem; margin-bottom: 0.75rem;">⚠️</div>
+      <h2 style="color:var(--danger); margin-bottom: 0.5rem; font-weight:800;">Fullscreen Mode Exited!</h2>
+      <p style="color:#64748b; margin-bottom: 1.5rem; line-height: 1.6; font-size:0.95rem;">
+        Switching applications or exiting fullscreen violates exam integrity policy and has been recorded in your audit report. You must return to continue.
+      </p>
+      <button id="reenter-fullscreen-btn" class="btn" style="background:#7c3aed; color:#fff; width:100%; padding:0.85rem; font-weight:700;">
+        Return to Fullscreen Exam Mode
+      </button>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="/static/js/proctor_ai.js"></script>
+  <script src="/static/js/exam.js"></script>
+</body>
+</html>

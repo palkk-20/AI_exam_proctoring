@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Monitoring & Admin Dashboard - SentinelAI</title>
+  <link rel="stylesheet" href="/static/css/styles.css?v=3.0">
+  <style>
+    /* Inline guaranteed styles for modals & question bank */
+    .modal-overlay {
+      position: fixed !important;
+      inset: 0 !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      background: rgba(15, 23, 42, 0.75) !important;
+      backdrop-filter: blur(6px) !important;
+      -webkit-backdrop-filter: blur(6px) !important;
+      display: none; /* hidden by default */
+      align-items: center !important;
+      justify-content: center !important;
+      z-index: 999999 !important;
+      padding: 1.5rem !important;
+    }
+    .modal-overlay.open {
+      display: flex !important;
+    }
+    .modal-content {
+      background: #ffffff !important;
+      color: #0f172a !important;
+      border-radius: 16px !important;
+      padding: 2rem !important;
+      width: 100% !important;
+      max-width: 650px !important;
+      max-height: 90vh !important;
+      overflow-y: auto !important;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;
+      position: relative !important;
+      z-index: 1000000 !important;
+    }
+    .badge-clean {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.3rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .badge-green { background: #dcfce7; color: #15803d; }
+    .badge-amber { background: #fef3c7; color: #b45309; }
+    .badge-red   { background: #fee2e2; color: #b91c1c; }
+    .badge-blue  { background: #dbeafe; color: #1d4ed8; }
+
+    @keyframes toastSlideUp {
+      from { transform: translateY(40px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .toast-anim {
+      animation: toastSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body style="background:#f8fafc;">
+
+  <div class="admin-layout">
+    <!-- Left Navigation Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <div style="width:34px; height:34px; border-radius:8px; background:linear-gradient(135deg, #2563eb, #3b82f6); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.2rem; font-weight:bold;">
+          🛡️
+        </div>
+        <div>
+          <h2>SentinelAI</h2>
+          <span style="font-size:0.75rem; color:#64748b;">Enterprise Proctoring</span>
+        </div>
+      </div>
+
+      <div class="sidebar-category-label">CORE</div>
+      <a href="javascript:void(0)" class="sidebar-menu-item active" id="nav-monitoring" onclick="switchAdminTab('monitoring')">
+        <span>👁️</span> <span>Live Monitoring</span>
+      </a>
+      <a href="javascript:void(0)" class="sidebar-menu-item" id="nav-questions" onclick="switchAdminTab('questions')">
+        <span>📋</span> <span>Question Bank</span>
+      </a>
+
+      <div class="sidebar-category-label">PROCTOR & DELIVERY</div>
+      <a href="javascript:void(0)" class="sidebar-menu-item" id="nav-candidates" onclick="switchAdminTab('candidates')">
+        <span>👥</span> <span>Active Students</span>
+      </a>
+      <a href="javascript:void(0)" class="sidebar-menu-item" id="nav-incidents" onclick="switchAdminTab('incidents')">
+        <span>🚨</span> <span>Violations & Logs</span>
+      </a>
+
+      <div class="sidebar-category-label">MANAGEMENT</div>
+      <a href="/" class="sidebar-menu-item">
+        <span>🎓</span> <span>Student Portal</span>
+      </a>
+      <a href="javascript:void(0)" class="sidebar-menu-item" onclick="location.reload()">
+        <span>🔄</span> <span>Refresh Dashboard</span>
+      </a>
+
+      <div style="margin-top:auto; padding:1.25rem; border-top:1px solid #2d3342;">
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <div style="width:32px; height:32px; border-radius:50%; background:#2563eb; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:0.85rem;">
+            AD
+          </div>
+          <div>
+            <div style="font-size:0.85rem; font-weight:700; color:#fff;">Chief Invigilator</div>
+            <div style="font-size:0.75rem; color:#64748b;">super_admin@exam.edu</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main-content">
+      
+      <!-- Top Header -->
+      <div class="admin-top-header">
+        <div>
+          <h1 id="view-title">Live Monitoring</h1>
+          <p id="view-subtitle" style="color:#64748b; font-size:0.9rem; margin-top:0.25rem;">
+            Surveillance desk & real-time candidate integrity stream
+          </p>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+          <span class="badge-clean badge-green" style="font-size:0.85rem;">
+            <span class="live-dot" style="margin-right:0.35rem;"></span>
+            WebSocket Online
+          </span>
+          <a href="/" class="btn" style="background:#fff; border:1px solid var(--border-light); color:#334155; padding:0.5rem 1rem; border-radius:8px; font-size:0.85rem; text-decoration:none;">
+            Student Portal &rarr;
+          </a>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 1: LIVE MONITORING SURVEILLANCE DESK      -->
+      <!-- ============================================== -->
+      <div id="tab-content-monitoring">
+        <!-- 4 KPI Cards -->
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-label">OPEN SITTINGS</div>
+            <div id="stat-total-candidates" class="kpi-value">7</div>
+            <div style="font-size:0.8rem; color:#10b981; font-weight:600; margin-top:0.25rem;">4 Examination Halls</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">ACTIVE ATTEMPTS</div>
+            <div id="stat-active-exams" class="kpi-value" style="color:#2563eb;">17</div>
+            <div style="font-size:0.8rem; color:#64748b; font-weight:600; margin-top:0.25rem;">Real-time Streaming</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">FLAGGED INCIDENTS</div>
+            <div id="stat-flagged-sessions" class="kpi-value" style="color:#f59e0b;">4</div>
+            <div style="font-size:0.8rem; color:#f59e0b; font-weight:600; margin-top:0.25rem;">Integrity &lt; 70%</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">TOTAL VIOLATIONS</div>
+            <div id="stat-total-violations" class="kpi-value" style="color:#ef4444;">19</div>
+            <div style="font-size:0.8rem; color:#ef4444; font-weight:600; margin-top:0.25rem;">Evidence Snapshots</div>
+          </div>
+        </div>
+
+        <!-- 4-Camera Surveillance Multi-View Grid -->
+        <div class="dashboard-table-card" style="padding:1.5rem; margin-bottom:2rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+            <h3 style="font-size:1.1rem; font-weight:800; color:#1e293b; display:flex; align-items:center; gap:0.5rem;">
+              <span>📹</span> Live Candidate Surveillance Feeds
+            </h3>
+            <span style="font-size:0.85rem; color:#64748b;">4 Active Video Channels</span>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:1.25rem;">
+            <!-- Candidate 1 -->
+            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:12px; padding:0.75rem;">
+              <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700; margin-bottom:0.5rem;">
+                <span>Aarav Sharma (CS-8841)</span>
+                <span class="badge-clean badge-green">96% Clean</span>
+              </div>
+              <div style="aspect-ratio:16/9; background:#0f172a; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:2.5rem; position:relative;">
+                🧑‍🎓
+                <span style="position:absolute; bottom:6px; left:6px; font-size:0.7rem; background:rgba(0,0,0,0.7); padding:2px 6px; border-radius:4px; font-family:monospace; color:#34d399;">FOCUSED</span>
+              </div>
+            </div>
+
+            <!-- Candidate 2 -->
+            <div style="background:#fefce8; border:2px solid #f59e0b; border-radius:12px; padding:0.75rem;">
+              <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700; margin-bottom:0.5rem;">
+                <span>Pooja Patel (CS-8842)</span>
+                <span class="badge-clean badge-amber">75% Warning</span>
+              </div>
+              <div style="aspect-ratio:16/9; background:#0f172a; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:2.5rem; position:relative;">
+                🧑‍🦰
+                <span style="position:absolute; bottom:6px; left:6px; font-size:0.7rem; background:rgba(245,158,11,0.9); padding:2px 6px; border-radius:4px; font-family:monospace; color:#0f172a; font-weight:bold;">LOOKING AWAY</span>
+              </div>
+            </div>
+
+            <!-- Candidate 3 -->
+            <div style="background:#fef2f2; border:2px solid #ef4444; border-radius:12px; padding:0.75rem;">
+              <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700; margin-bottom:0.5rem;">
+                <span>Rohan Mehta (CS-8843)</span>
+                <span class="badge-clean badge-red">48% High Risk</span>
+              </div>
+              <div style="aspect-ratio:16/9; background:#0f172a; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:2.5rem; position:relative;">
+                🧑‍💻 👤
+                <span style="position:absolute; bottom:6px; left:6px; font-size:0.7rem; background:rgba(239,68,68,0.9); padding:2px 6px; border-radius:4px; font-family:monospace; color:#fff; font-weight:bold;">MULTIPLE FACES</span>
+              </div>
+            </div>
+
+            <!-- Candidate 4 -->
+            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:12px; padding:0.75rem;">
+              <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700; margin-bottom:0.5rem;">
+                <span>Sneha Rao (CS-8844)</span>
+                <span class="badge-clean badge-green">100% Clean</span>
+              </div>
+              <div style="aspect-ratio:16/9; background:#0f172a; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:2.5rem; position:relative;">
+                👩‍💼
+                <span style="position:absolute; bottom:6px; left:6px; font-size:0.7rem; background:rgba(0,0,0,0.7); padding:2px 6px; border-radius:4px; font-family:monospace; color:#34d399;">NORMAL</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Incident Ticker -->
+        <div class="dashboard-table-card" style="padding:1.25rem 1.5rem; margin-bottom:2rem;">
+          <h4 style="font-size:0.88rem; font-weight:800; color:#334155; margin-bottom:0.75rem; display:flex; align-items:center; gap:0.4rem;">
+            <span class="live-dot"></span> Live Security Incident Broadcasts (WebSocket Online)
+          </h4>
+          <div id="live-ticker" style="max-height: 120px; overflow-y:auto;">
+            <p style="color:#64748b; font-size:0.85rem;">Listening for real-time candidate infractions...</p>
+          </div>
+        </div>
+
+        <!-- Master Sittings & Sessions Table -->
+        <div class="dashboard-table-card">
+          <div class="table-card-header">
+            <h3>Candidate Exam Sittings</h3>
+            <span style="font-size:0.85rem; color:#64748b;">Active sessions ledger</span>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Candidate</th>
+                  <th>Student ID</th>
+                  <th>Session Status</th>
+                  <th>Integrity Score</th>
+                  <th>Violations</th>
+                  <th>Score</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="sessions-table-body">
+                <tr>
+                  <td colspan="7" style="text-align:center; padding: 2rem; color:#64748b;">
+                    Loading candidate sessions...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 2: QUESTION BANK (Matches User Image 1)    -->
+      <!-- ============================================== -->
+      <div id="tab-content-questions" style="display:none;">
+        <div class="dashboard-table-card">
+          <div class="table-card-header">
+            <div>
+              <h3 id="q-bank-count-text">Question Bank</h3>
+              <span style="font-size:0.85rem; color:#64748b;">Institutional Exam Assessment Repository</span>
+            </div>
+            <div style="display:flex; gap:0.75rem; align-items:center;">
+              <div style="position:relative; display:flex; align-items:center;">
+                <input type="text" id="search-questions-input" placeholder="Search questions, category..." style="padding:0.55rem 2rem 0.55rem 1rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; outline:none; width:260px; background:#fff; color:#0f172a;" />
+                <button type="button" id="btn-clear-search" style="position:absolute; right:0.55rem; background:none; border:none; color:#94a3b8; cursor:pointer; font-size:0.95rem; display:none;" title="Clear search">✕</button>
+              </div>
+              <button type="button" id="btn-open-add-q-modal" class="btn" style="background:#2563eb; color:#fff; padding:0.55rem 1.35rem; border-radius:8px; font-size:0.88rem; font-weight:700; box-shadow:0 4px 12px rgba(37,99,235,0.3); cursor:pointer;">
+                + New Question
+              </button>
+            </div>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th style="width:40px;"><input type="checkbox" id="check-all-q"></th>
+                  <th style="min-width:320px;">QUESTION TITLE & CORRECT ANSWER</th>
+                  <th>CATEGORY</th>
+                  <th>STATUS</th>
+                  <th>OPTIONS</th>
+                  <th>ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="questions-table-body">
+                <tr>
+                  <td colspan="6" style="text-align:center; padding:2.5rem; color:#64748b;">
+                    Loading questions from database...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="padding:1rem 1.5rem; display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-light); font-size:0.85rem; color:#64748b;">
+            <span id="q-pagination-info">Showing all questions</span>
+            <div style="display:flex; gap:0.4rem;">
+              <button type="button" class="btn" style="padding:0.35rem 0.8rem; background:#2563eb; color:#fff; font-size:0.8rem; border-radius:6px;">1</button>
+              <button type="button" class="btn" style="padding:0.35rem 0.8rem; background:#f1f5f9; color:#334155; font-size:0.8rem; border-radius:6px;">2</button>
+              <button type="button" class="btn" style="padding:0.35rem 0.8rem; background:#f1f5f9; color:#334155; font-size:0.8rem; border-radius:6px;">Next &rarr;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 3: ACTIVE STUDENTS LIST                   -->
+      <!-- ============================================== -->
+      <div id="tab-content-candidates" style="display:none;">
+        <div class="dashboard-table-card">
+          <div class="table-card-header">
+            <h3>Registered Candidates & Students</h3>
+            <span style="font-size:0.85rem; color:#64748b;">Enrolled academic roster</span>
+          </div>
+          <div style="padding:1.5rem;">
+            <div style="overflow-x:auto;">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Student ID / Roll No</th>
+                    <th>Full Name</th>
+                    <th>Email Address</th>
+                    <th>Registration Date</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="candidates-table-body">
+                  <tr>
+                    <td><code>CS2026-1042</code></td>
+                    <td><strong>Rahul Sharma</strong></td>
+                    <td>rahul@university.edu</td>
+                    <td>Today</td>
+                    <td><span class="badge-clean badge-green">Enrolled</span></td>
+                  </tr>
+                  <tr>
+                    <td><code>CS-8841</code></td>
+                    <td><strong>Aarav Sharma</strong></td>
+                    <td>aarav@university.edu</td>
+                    <td>Today</td>
+                    <td><span class="badge-clean badge-green">Enrolled</span></td>
+                  </tr>
+                  <tr>
+                    <td><code>CS-8842</code></td>
+                    <td><strong>Pooja Patel</strong></td>
+                    <td>pooja@university.edu</td>
+                    <td>Today</td>
+                    <td><span class="badge-clean badge-amber">Exam Active</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 4: VIOLATIONS & LOGS                      -->
+      <!-- ============================================== -->
+      <div id="tab-content-incidents" style="display:none;">
+        <div class="dashboard-table-card">
+          <div class="table-card-header">
+            <h3>Security Incidents & Malpractice Log</h3>
+            <span style="font-size:0.85rem; color:#64748b;">Chronological audit trail</span>
+          </div>
+          <div style="padding:1.5rem;">
+            <div style="overflow-x:auto;">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Violation Code</th>
+                    <th>Description</th>
+                    <th>Severity</th>
+                    <th>Penalty Deducted</th>
+                  </tr>
+                </thead>
+                <tbody id="incidents-table-body">
+                  <tr>
+                    <td><code>11:14:02</code></td>
+                    <td><span class="badge-clean badge-red">MULTIPLE_FACES</span></td>
+                    <td>Second person detected entering camera view</td>
+                    <td><strong style="color:#ef4444;">CRITICAL</strong></td>
+                    <td style="color:#ef4444; font-weight:bold;">-15%</td>
+                  </tr>
+                  <tr>
+                    <td><code>11:12:18</code></td>
+                    <td><span class="badge-clean badge-amber">TAB_SWITCH</span></td>
+                    <td>Candidate switched browser tab or minimized window</td>
+                    <td><strong style="color:#f59e0b;">HIGH</strong></td>
+                    <td style="color:#ef4444; font-weight:bold;">-12%</td>
+                  </tr>
+                  <tr>
+                    <td><code>11:08:42</code></td>
+                    <td><span class="badge-clean badge-amber">LOOKING_AWAY</span></td>
+                    <td>Head yaw angle exceeded 32 degrees</td>
+                    <td><strong style="color:#f59e0b;">MEDIUM</strong></td>
+                    <td style="color:#ef4444; font-weight:bold;">-5%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: ADD NEW QUESTION (Clean Z-Index Fixed)  -->
+  <!-- ============================================== -->
+  <div id="add-question-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:0.85rem; margin-bottom:1.25rem;">
+        <div>
+          <h2 style="font-size:1.35rem; font-weight:800; color:#1e293b; margin:0;">+ Add New Question</h2>
+          <span style="font-size:0.85rem; color:#64748b;">Insert question into institutional Question Bank</span>
+        </div>
+        <button type="button" id="close-add-q-modal-btn" class="btn" style="background:#e2e8f0; color:#334155; padding:0.4rem 0.85rem; border-radius:8px;">✕ Close</button>
+      </div>
+
+      <form id="add-question-form">
+        <div style="margin-bottom:1.1rem;">
+          <label style="display:block; font-size:0.88rem; font-weight:700; color:#334155; margin-bottom:0.4rem;">
+            Question Statement *
+          </label>
+          <textarea id="new-q-text" rows="3" class="custom-input" style="background:#f8fafc; color:#0f172a; border:1px solid #cbd5e1; resize:vertical; width:100%;" placeholder="e.g. Which algorithm is best suited for finding the shortest path in a weighted graph?" required></textarea>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.85rem; margin-bottom:1.1rem;">
+          <div>
+            <label style="font-size:0.82rem; font-weight:700; color:#334155; margin-bottom:0.3rem; display:block;">Option A *</label>
+            <input type="text" id="new-opt-a" class="custom-input" style="background:#f8fafc; color:#0f172a; border:1px solid #cbd5e1; margin-bottom:0; width:100%;" placeholder="Option A text" required />
+          </div>
+          <div>
+            <label style="font-size:0.82rem; font-weight:700; color:#334155; margin-bottom:0.3rem; display:block;">Option B *</label>
+            <input type="text" id="new-opt-b" class="custom-input" style="background:#f8fafc; color:#0f172a; border:1px solid #cbd5e1; margin-bottom:0; width:100%;" placeholder="Option B text" required />
+          </div>
+          <div>
+            <label style="font-size:0.82rem; font-weight:700; color:#334155; margin-bottom:0.3rem; display:block;">Option C *</label>
+            <input type="text" id="new-opt-c" class="custom-input" style="background:#f8fafc; color:#0f172a; border:1px solid #cbd5e1; margin-bottom:0; width:100%;" placeholder="Option C text" required />
+          </div>
+          <div>
+            <label style="font-size:0.82rem; font-weight:700; color:#334155; margin-bottom:0.3rem; display:block;">Option D *</label>
+            <input type="text" id="new-opt-d" class="custom-input" style="background:#f8fafc; color:#0f172a; border:1px solid #cbd5e1; margin-bottom:0; width:100%;" placeholder="Option D text" required />
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.85rem; margin-bottom:1.5rem;">
+          <div>
+            <label style="font-size:0.82rem; font-weight:700; color:#334155; margin-bottom:0.3rem; display:block;">Correct Option *</label>
+            <select id="new-correct-idx" class="custom-input" style="background:#f8fafc; color:#0f172a; border:1px solid #cbd5e1; margin-bottom:0; width:100%;">
+              <option value="0">Option A</option>
+              <option value="1">Option B</option>
+              <option value="2">Option C</option>
+              <option value="3">Option D</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:0.82rem; font-weight:700; color:#334155; margin-bottom:0.3rem; display:block;">Category / Subject</label>
+            <input type="text" id="new-category" class="custom-input" style="background:#f8fafc; color:#0f172a; border:1px solid #cbd5e1; margin-bottom:0; width:100%;" placeholder="e.g. Computer Science" value="Computer Science" />
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+          <button type="button" id="cancel-add-q-btn" class="btn" style="background:#e2e8f0; color:#334155; padding:0.6rem 1.25rem;">
+            Cancel
+          </button>
+          <button type="submit" id="save-q-btn" class="btn" style="background:#2563eb; color:#fff; padding:0.6rem 1.75rem; font-weight:700;">
+            Save Question to Bank &rarr;
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: AUDIT CANDIDATE SESSION               -->
+  <!-- ============================================== -->
+  <div id="audit-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content" style="max-width:800px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-light); padding-bottom:0.75rem;">
+        <div>
+          <h2 id="modal-candidate-name" style="font-size:1.4rem; font-weight:800; margin:0;">Candidate Name</h2>
+          <span id="modal-roll-no" style="color:#64748b; font-size:0.88rem;"></span>
+        </div>
+        <button id="modal-close-btn" class="btn" style="background:#e2e8f0; color:#334155; padding:0.35rem 0.75rem;">✕ Close</button>
+      </div>
+
+      <div style="display:flex; gap:1rem; margin-bottom:1.25rem;">
+        <span id="modal-integrity-badge" class="badge-clean badge-green">Integrity: 100%</span>
+        <span id="modal-status-badge" class="badge-clean badge-blue">IN_PROGRESS</span>
+        <span class="badge-clean" style="background:#f1f5f9;">Score: <strong id="modal-score-text">--</strong></span>
+      </div>
+
+      <div style="display:flex; gap:0.75rem; margin-bottom:1.5rem; padding:0.75rem; background:#f8fafc; border-radius:10px; border:1px solid var(--border-light);">
+        <button id="btn-send-warning" class="btn" style="background:#f59e0b; color:#0f172a; font-size:0.85rem; padding:0.45rem 1rem;">
+          ⚠️ Send Live Warning
+        </button>
+        <button id="btn-terminate-session" class="btn" style="background:#ef4444; color:#fff; font-size:0.85rem; padding:0.45rem 1rem;">
+          🚫 Force Disqualify Exam
+        </button>
+      </div>
+
+      <h4 style="font-size:0.95rem; font-weight:800; margin-bottom:0.6rem;">Violation Incidents Log</h4>
+      <div style="max-height:160px; overflow-y:auto; margin-bottom:1.5rem; border:1px solid var(--border-light); border-radius:8px;">
+        <table class="custom-table" style="font-size:0.85rem;">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Violation</th>
+              <th>Description</th>
+              <th>Penalty</th>
+            </tr>
+          </thead>
+          <tbody id="modal-violations-table"></tbody>
+        </table>
+      </div>
+
+      <h4 style="font-size:0.95rem; font-weight:800; margin-bottom:0.6rem;">Captured Photographic Proof (AI Snapshots)</h4>
+      <div id="modal-snapshot-gallery" class="evidence-grid" style="max-height:240px; overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Floating Widget -->
+  <div id="toast-notification" class="toast-anim" style="position:fixed; bottom:28px; right:28px; background:#10b981; color:#fff; padding:0.9rem 1.6rem; border-radius:12px; font-weight:700; font-size:0.92rem; box-shadow:0 12px 30px rgba(0,0,0,0.3); display:none; z-index:9999999; align-items:center; gap:0.65rem; border:1px solid rgba(255,255,255,0.2);">
+    <span id="toast-icon" style="font-size:1.2rem;">✅</span>
+    <span id="toast-message">Question saved successfully!</span>
+  </div>
+
+  <!-- Core Dashboard Logic with Direct Guaranteed Execution -->
+  <script>
+    let currentQuestionsList = [];
+    let isFetchingQuestions = false;
+
+    // Toast Notification Helper
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast-notification');
+      const toastMsg = document.getElementById('toast-message');
+      const toastIcon = document.getElementById('toast-icon');
+      if (!toast || !toastMsg) return;
+
+      toastMsg.textContent = message;
+      if (type === 'error') {
+        toast.style.background = '#ef4444';
+        toastIcon.textContent = '❌';
+      } else {
+        toast.style.background = '#10b981';
+        toastIcon.textContent = '✅';
+      }
+      toast.style.display = 'flex';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 4000);
+    }
+
+    // ==========================================
+    // TAB SWITCHING FUNCTION (With URL Hash Support)
+    // ==========================================
+    function switchAdminTab(tabName) {
+      const validTabs = ['monitoring', 'questions', 'candidates', 'incidents'];
+      const targetTab = validTabs.includes(tabName) ? tabName : 'monitoring';
+
+      validTabs.forEach(t => {
+        const pane = document.getElementById('tab-content-' + t);
+        const nav = document.getElementById('nav-' + t);
+        if (pane) pane.style.display = (t === targetTab) ? 'block' : 'none';
+        if (nav) {
+          if (t === targetTab) nav.classList.add('active');
+          else nav.classList.remove('active');
+        }
+      });
+
+      const title = document.getElementById('view-title');
+      const subtitle = document.getElementById('view-subtitle');
+
+      if (targetTab === 'questions') {
+        if (title) title.textContent = 'Question Bank Management';
+        if (subtitle) subtitle.textContent = 'Institutional Assessment Repository (Add, Edit & Search Questions)';
+        fetchAndRenderQuestions();
+      } else if (targetTab === 'candidates') {
+        if (title) title.textContent = 'Active Students & Candidates';
+        if (subtitle) subtitle.textContent = 'List of candidates enrolled in examination sessions';
+      } else if (targetTab === 'incidents') {
+        if (title) title.textContent = 'Security Incidents & Violations';
+        if (subtitle) subtitle.textContent = 'Real-time Malpractice Audit Log & Captured Evidence';
+      } else {
+        if (title) title.textContent = 'Live Monitoring';
+        if (subtitle) subtitle.textContent = 'Surveillance desk & real-time candidate integrity stream';
+      }
+
+      try {
+        if (window.location.hash !== '#' + targetTab) {
+          history.replaceState(null, '', '#' + targetTab);
+        }
+      } catch (e) {}
+    }
+
+    // ==========================================
+    // QUESTION BANK FETCH & RENDER
+    // ==========================================
+    async function fetchAndRenderQuestions() {
+      if (isFetchingQuestions) return;
+      isFetchingQuestions = true;
+      const tbody = document.getElementById("questions-table-body");
+      const countHeader = document.getElementById("q-bank-count-text");
+      const paginationInfo = document.getElementById("q-pagination-info");
+
+      try {
+        const res = await fetch("/api/admin/questions?_t=" + Date.now());
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        currentQuestionsList = data.questions || [];
+
+        const searchInput = document.getElementById("search-questions-input");
+        const currentQuery = searchInput ? searchInput.value.toLowerCase().trim() : "";
+        if (currentQuery) {
+          filterAndRender(currentQuery);
+        } else {
+          renderQuestionsTable(currentQuestionsList);
+          if (countHeader) countHeader.textContent = `Question Bank (${currentQuestionsList.length} questions)`;
+          if (paginationInfo) paginationInfo.textContent = `Showing all ${currentQuestionsList.length} questions`;
+        }
+      } catch (err) {
+        console.error("Error fetching questions:", err);
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#ef4444; padding:2.5rem; font-weight:600;">⚠️ Failed to load questions: ${err.message}. Please click "Refresh Dashboard".</td></tr>`;
+        }
+      } finally {
+        isFetchingQuestions = false;
+      }
+    }
+
+    function escapeHtml(text) {
+      if (!text) return "";
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function renderQuestionsTable(questions) {
+      const tbody = document.getElementById("questions-table-body");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+
+      if (!questions || questions.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align:center; padding:3rem 1.5rem; color:#64748b;">
+              <div style="font-size:2.2rem; margin-bottom:0.5rem;">🔍</div>
+              <strong style="font-size:1.05rem; color:#334155;">No questions match your search</strong>
+              <p style="margin-top:0.35rem; font-size:0.85rem; color:#94a3b8;">Try a different keyword or click <strong>"+ New Question"</strong> to create one.</p>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      questions.forEach((q) => {
+        const tr = document.createElement("tr");
+        const optLetter = String.fromCharCode(65 + (q.correct_index || 0));
+        const optVal = (q.options && q.options[q.correct_index]) ? q.options[q.correct_index] : "";
+        const optionsCount = (q.options && q.options.length) ? q.options.length : 4;
+
+        tr.innerHTML = `
+          <td><input type="checkbox"></td>
+          <td>
+            <div style="font-weight:700; color:#1e293b; margin-bottom:0.35rem; font-size:0.95rem; line-height:1.4;">
+              ${escapeHtml(q.question_text)}
+            </div>
+            <div style="font-size:0.8rem; color:#64748b; display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+              <span>Correct Answer:</span>
+              <strong style="color:#059669; background:#ecfdf5; padding:2px 8px; border-radius:6px; border:1px solid #a7f3d0;">
+                Option ${optLetter} &bull; ${escapeHtml(optVal)}
+              </strong>
+            </div>
+          </td>
+          <td><span class="badge-clean badge-blue">${escapeHtml(q.category || 'General')}</span></td>
+          <td><span class="badge-clean badge-green">Active in Exam</span></td>
+          <td><span style="font-weight:600; color:#475569;">${optionsCount} Options</span></td>
+          <td>
+            <button type="button" class="btn" style="background:#fee2e2; color:#b91c1c; padding:0.4rem 0.85rem; font-size:0.78rem; font-weight:700; border-radius:6px; cursor:pointer;" onclick="deleteQuestionItem(${q.id})">
+              🗑️ Delete
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ==========================================
+    // SEARCH & FILTER LOGIC
+    // ==========================================
+    function filterAndRender(query) {
+      const countHeader = document.getElementById("q-bank-count-text");
+      const paginationInfo = document.getElementById("q-pagination-info");
+      const btnClear = document.getElementById("btn-clear-search");
+
+      if (btnClear) btnClear.style.display = query ? "block" : "none";
+
+      if (!query) {
+        renderQuestionsTable(currentQuestionsList);
+        if (countHeader) countHeader.textContent = `Question Bank (${currentQuestionsList.length} questions)`;
+        if (paginationInfo) paginationInfo.textContent = `Showing all ${currentQuestionsList.length} questions`;
+        return;
+      }
+
+      const filtered = currentQuestionsList.filter(item => {
+        const textMatch = item.question_text && item.question_text.toLowerCase().includes(query);
+        const catMatch = item.category && item.category.toLowerCase().includes(query);
+        const optMatch = item.options && item.options.some(o => o && o.toLowerCase().includes(query));
+        return textMatch || catMatch || optMatch;
+      });
+
+      renderQuestionsTable(filtered);
+      if (countHeader) countHeader.textContent = `Question Bank (${filtered.length} found)`;
+      if (paginationInfo) paginationInfo.textContent = `Found ${filtered.length} of ${currentQuestionsList.length} questions matching "${query}"`;
+    }
+
+    // ==========================================
+    // DELETE QUESTION FUNCTION
+    // ==========================================
+    async function deleteQuestionItem(qId) {
+      if (!confirm("Are you sure you want to permanently delete this question from the Question Bank?")) return;
+      try {
+        const res = await fetch(`/api/admin/questions/${qId}`, { method: "DELETE" });
+        const data = await res.json();
+        if (data.status === "deleted") {
+          showToast("🗑️ Question deleted successfully!", "success");
+          await fetchAndRenderQuestions();
+        } else {
+          showToast(data.detail || "Could not delete question", "error");
+        }
+      } catch (err) {
+        showToast("Delete failed: " + err.message, "error");
+      }
+    }
+
+    // ==========================================
+    // MODAL OPEN / CLOSE CONTROLLERS
+    // ==========================================
+    function openAddQuestionModal() {
+      const modal = document.getElementById("add-question-modal");
+      if (modal) {
+        modal.classList.add("open");
+        modal.style.display = "flex";
+        setTimeout(() => {
+          const firstInput = document.getElementById("new-q-text");
+          if (firstInput) firstInput.focus();
+        }, 50);
+      }
+    }
+
+    function closeAddQuestionModal() {
+      const modal = document.getElementById("add-question-modal");
+      if (modal) {
+        modal.classList.remove("open");
+        modal.style.display = "none";
+      }
+    }
+
+    // Expose helpers globally
+    window.switchAdminTab = switchAdminTab;
+    window.fetchAndRenderQuestions = fetchAndRenderQuestions;
+    window.deleteQuestionItem = deleteQuestionItem;
+    window.openAddQuestionModal = openAddQuestionModal;
+    window.closeAddQuestionModal = closeAddQuestionModal;
+
+    // ==========================================
+    // DOM READY INITIALIZATION
+    // ==========================================
+    document.addEventListener("DOMContentLoaded", () => {
+      // 1. Initial tab from hash or default
+      const hash = (window.location.hash || '').replace('#', '');
+      if (['questions', 'candidates', 'incidents'].includes(hash)) {
+        switchAdminTab(hash);
+      } else {
+        switchAdminTab('monitoring');
+      }
+
+      // Pre-fetch questions immediately in background
+      fetchAndRenderQuestions();
+
+      // 2. Search input live filtering
+      const searchInput = document.getElementById("search-questions-input");
+      if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+          filterAndRender(e.target.value.toLowerCase().trim());
+        });
+      }
+
+      const btnClear = document.getElementById("btn-clear-search");
+      if (btnClear && searchInput) {
+        btnClear.addEventListener("click", () => {
+          searchInput.value = "";
+          filterAndRender("");
+          searchInput.focus();
+        });
+      }
+
+      // 3. Modal open / close buttons
+      const btnOpen = document.getElementById("btn-open-add-q-modal");
+      const btnClose = document.getElementById("close-add-q-modal-btn");
+      const btnCancel = document.getElementById("cancel-add-q-btn");
+      const addModal = document.getElementById("add-question-modal");
+
+      if (btnOpen) btnOpen.onclick = openAddQuestionModal;
+      if (btnClose) btnClose.onclick = closeAddQuestionModal;
+      if (btnCancel) btnCancel.onclick = closeAddQuestionModal;
+
+      // Close when clicking modal backdrop
+      if (addModal) {
+        addModal.addEventListener("click", (e) => {
+          if (e.target === addModal) closeAddQuestionModal();
+        });
+      }
+
+      // Close on Escape key
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeAddQuestionModal();
+          const auditModal = document.getElementById("audit-modal");
+          if (auditModal) {
+            auditModal.style.display = "none";
+            auditModal.classList.remove("open");
+          }
+        }
+      });
+
+      // 4. Add Question Form submission
+      const form = document.getElementById("add-question-form");
+      if (form) {
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          const qText = document.getElementById("new-q-text").value.trim();
+          const optA = document.getElementById("new-opt-a").value.trim();
+          const optB = document.getElementById("new-opt-b").value.trim();
+          const optC = document.getElementById("new-opt-c").value.trim();
+          const optD = document.getElementById("new-opt-d").value.trim();
+          const correctIdx = parseInt(document.getElementById("new-correct-idx").value);
+          const category = document.getElementById("new-category").value.trim() || "Computer Science";
+
+          if (!qText || !optA || !optB || !optC || !optD) {
+            alert("Please fill in the question text and all 4 options.");
+            return;
+          }
+
+          const btnSave = document.getElementById("save-q-btn");
+          btnSave.disabled = true;
+          btnSave.textContent = "Saving to Database...";
+
+          try {
+            const res = await fetch("/api/admin/questions", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                question_text: qText,
+                options: [optA, optB, optC, optD],
+                correct_index: correctIdx,
+                category: category
+              })
+            });
+
+            const data = await res.json();
+            if (data.status === "success") {
+              form.reset();
+              closeAddQuestionModal();
+              showToast("🎉 Question added to Question Bank & Database successfully!", "success");
+              if (searchInput) searchInput.value = "";
+              await fetchAndRenderQuestions();
+            } else {
+              alert("Could not save: " + (data.detail || "Error occurred"));
+            }
+          } catch (err) {
+            alert("Failed to save question: " + err.message);
+          } finally {
+            btnSave.disabled = false;
+            btnSave.textContent = "Save Question to Bank →";
+          }
+        };
+      }
+    });
+  </script>
+
+  <script src="/static/js/dashboard.js?v=4.0"></script>
+</body>
+</html>

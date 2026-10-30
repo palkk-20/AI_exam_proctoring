@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Portal - SentinelAI Online Exam & Proctoring</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+
+  <div class="login-wrapper">
+    <!-- Left Side: Login Form (Matches User Reference Image 1) -->
+    <div class="login-left-panel">
+      <div class="login-box">
+        <div class="login-header">
+          <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom: 1.5rem;">
+            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #7c3aed, #6366f1); display:flex; align-items:center; justify-content:center; font-size:1.2rem; box-shadow:0 0 15px rgba(124,58,237,0.5);">
+              🛡️
+            </div>
+            <span style="font-size:1.15rem; font-weight:800; color:#fff; letter-spacing:-0.5px;">SentinelAI</span>
+          </div>
+          <h2>Login</h2>
+          <p>Enter your account details</p>
+        </div>
+
+        <!-- Portal Role Selector Tabs -->
+        <div class="portal-tabs">
+          <button type="button" id="tab-student" class="portal-tab-btn active" onclick="switchPortalTab('student')">
+            Student Portal
+          </button>
+          <button type="button" id="tab-admin-portal" class="portal-tab-btn" onclick="switchPortalTab('admin')">
+            Proctor Admin
+          </button>
+        </div>
+
+        <!-- Student Registration / Login Form -->
+        <form id="student-login-form">
+          <div class="form-field-group">
+            <label class="input-label">Username / Student ID</label>
+            <input type="text" id="cand-roll" class="custom-input" placeholder="e.g. CS2026-1042" required value="CS2026-1042" />
+          </div>
+
+          <div class="form-field-group">
+            <label class="input-label">Full Name</label>
+            <input type="text" id="cand-name" class="custom-input" placeholder="e.g. Rahul Sharma" required value="Rahul Sharma" />
+          </div>
+
+          <div class="form-field-group">
+            <label class="input-label">Exam Access Key</label>
+            <input type="text" id="cand-exam-key" class="custom-input" placeholder="AI-FINAL-2026" value="AI-FINAL-2026" />
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.25rem; font-size: 0.85rem;">
+            <label style="color:#94a3b8; display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+              <input type="checkbox" checked style="accent-color:#7c3aed;"> Remember credentials
+            </label>
+            <a href="#" style="color:#a78bfa; text-decoration:none;" onclick="alert('Demo access key: AI-FINAL-2026')">Forgot Password?</a>
+          </div>
+
+          <button type="submit" id="login-submit-btn" class="login-btn">
+            Login & Continue to Exam
+          </button>
+
+          <div style="margin-top: 1.75rem; text-align:center; font-size:0.88rem; color:#94a3b8;">
+            Invigilator or Proctor? <a href="/admin" style="color:#a78bfa; font-weight:600; text-decoration:none;">Open Proctor Dashboard &rarr;</a>
+          </div>
+        </form>
+
+        <!-- Admin Quick Access Form (Hidden by default) -->
+        <form id="admin-login-form" style="display:none;" onsubmit="event.preventDefault(); window.location.href='/admin';">
+          <div class="form-field-group">
+            <label class="input-label">Admin Username</label>
+            <input type="text" class="custom-input" value="proctor_admin" required />
+          </div>
+          <div class="form-field-group">
+            <label class="input-label">Security Key</label>
+            <input type="password" class="custom-input" value="••••••••••••" required />
+          </div>
+          <button type="submit" class="login-btn" style="background:#2563eb;">
+            Enter Proctor Surveillance Center
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right Side: Purple Illustration Banner (Matches User Reference Image 1) -->
+    <div class="login-right-panel">
+      <!-- Background Ambient Glow Circles -->
+      <div style="position:absolute; top:-80px; right:-80px; width:300px; height:300px; border-radius:50%; background:rgba(255,255,255,0.1); pointer-events:none;"></div>
+      <div style="position:absolute; bottom:-100px; left:-100px; width:350px; height:350px; border-radius:50%; background:rgba(0,0,0,0.1); pointer-events:none;"></div>
+
+      <div class="banner-content">
+        <h1>Welcome to<br>student portal</h1>
+        <p>Login to access your automated AI online exam proctoring assessment.</p>
+
+        <!-- Graphic Card with Vector Art -->
+        <div class="illustration-card">
+          <!-- Stylized Student Illustration Vector SVG -->
+          <svg width="220" height="180" viewBox="0 0 240 200" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 15px 25px rgba(0,0,0,0.25));">
+            <!-- Background Clipboard & Paper -->
+            <rect x="50" y="30" width="140" height="150" rx="14" fill="#ffffff" fill-opacity="0.95" />
+            <rect x="90" y="18" width="60" height="20" rx="8" fill="#5b21b6" />
+            <!-- Check lines on paper -->
+            <line x1="75" y1="65" x2="165" y2="65" stroke="#7c3aed" stroke-width="4" stroke-linecap="round" />
+            <line x1="75" y1="90" x2="150" y2="90" stroke="#cbd5e1" stroke-width="4" stroke-linecap="round" />
+            <line x1="75" y1="115" x2="160" y2="115" stroke="#cbd5e1" stroke-width="4" stroke-linecap="round" />
+            <line x1="75" y1="140" x2="135" y2="140" stroke="#cbd5e1" stroke-width="4" stroke-linecap="round" />
+            
+            <!-- Student Character sitting with Laptop -->
+            <circle cx="160" cy="55" r="16" fill="#1e1b4b" />
+            <path d="M142 85 C142 70 178 70 178 85 L178 120 L142 120 Z" fill="#7c3aed" />
+            <!-- Laptop on lap -->
+            <polygon points="120,110 155,110 150,122 115,122" fill="#3b82f6" />
+            <rect x="122" y="92" width="28" height="20" rx="3" fill="#0f172a" />
+            <!-- Plant leaves -->
+            <path d="M190 150 C210 130 220 150 205 170 C190 150 190 150 190 150 Z" fill="#10b981" />
+            <path d="M40 160 C20 140 10 160 30 180 Z" fill="#10b981" />
+          </svg>
+
+          <div style="font-weight:700; font-size:1.1rem; margin-top:1.25rem;">
+            Secure Proctoring Environment
+          </div>
+          <div style="font-size:0.85rem; opacity:0.85; margin-top:0.25rem;">
+            Computer Vision &bull; Acoustic Speech Check &bull; Fullscreen Lock
+          </div>
+
+          <div class="feature-pill-row">
+            <span class="feature-pill">🎯 99.4% Face Accuracy</span>
+            <span class="feature-pill">👁️ Gaze & Head Tracking</span>
+            <span class="feature-pill">🔒 Anti-Cheating Sandbox</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchPortalTab(type) {
+      const studentTab = document.getElementById('tab-student');
+      const adminTab = document.getElementById('tab-admin-portal');
+      const studentForm = document.getElementById('student-login-form');
+      const adminForm = document.getElementById('admin-login-form');
+
+      if (type === 'student') {
+        studentTab.classList.add('active');
+        adminTab.classList.remove('active');
+        studentForm.style.display = 'block';
+        adminForm.style.display = 'none';
+      } else {
+        adminTab.classList.add('active');
+        studentTab.classList.remove('active');
+        adminForm.style.display = 'block';
+        studentForm.style.display = 'none';
+      }
+    }
+
+    // Handle student form submission -> start session & launch exam
+    document.getElementById('student-login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const roll = document.getElementById('cand-roll').value.trim();
+      const name = document.getElementById('cand-name').value.trim();
+      const btn = document.getElementById('login-submit-btn');
+
+      btn.disabled = true;
+      btn.textContent = 'Initializing Secure Exam Session...';
+
+      try {
+        const res = await fetch('/api/exam/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name, roll_no: roll })
+        });
+        const data = await res.json();
+        if (data.session_id) {
+          window.location.href = `/exam/${data.session_id}`;
+        }
+      } catch (err) {
+        alert('Could not start exam: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Login & Continue to Exam';
+      }
+    });
+  </script>
+</body>
+</html>

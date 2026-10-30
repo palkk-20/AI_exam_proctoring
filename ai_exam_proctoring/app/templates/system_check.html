@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pre-Exam System Calibration - SentinelAI</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="/" class="brand">
+      <div class="brand-icon">🛡️</div>
+      <span>SentinelAI Proctor</span>
+    </a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Home</a>
+    </div>
+  </nav>
+
+  <main class="main-content" style="max-width: 1000px;">
+    <div style="margin-bottom: 2rem;">
+      <h2>Candidate Verification & System Calibration</h2>
+      <p style="color:var(--text-secondary); margin-top: 0.25rem;">
+        Complete the hardware diagnostic check before entering the secure examination room.
+      </p>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+      <!-- Left: Candidate Details & Rules -->
+      <div class="card">
+        <h3 style="margin-bottom: 1.25rem;">Candidate Information</h3>
+        <form id="candidate-form">
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input type="text" id="cand-name" class="form-input" placeholder="e.g. Rahul Sharma" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Roll Number / Student ID *</label>
+            <input type="text" id="cand-roll" class="form-input" placeholder="e.g. CS2026-1042" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email Address (Optional)</label>
+            <input type="email" id="cand-email" class="form-input" placeholder="student@university.edu" />
+          </div>
+
+          <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+            <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem;">Proctoring Code of Conduct:</h4>
+            <ul style="color:var(--text-secondary); font-size:0.85rem; line-height: 1.6; padding-left: 1.2rem;">
+              <li>Stay facing the camera at all times during the test.</li>
+              <li>No secondary persons are permitted in the room.</li>
+              <li>Switching tabs or minimizing the window will reduce your integrity score.</li>
+              <li>Background conversation or speech is automatically flagged.</li>
+            </ul>
+          </div>
+
+          <div style="margin-top: 1.5rem;">
+            <button type="submit" id="start-exam-btn" class="btn btn-primary" style="width: 100%;">
+              I Agree &bull; Launch Exam in Fullscreen
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Right: Hardware Camera & Mic Calibration Preview -->
+      <div class="card" style="display:flex; flex-direction:column;">
+        <h3 style="margin-bottom: 1rem;">Hardware & AI Calibration</h3>
+
+        <div class="camera-container" style="margin-bottom: 1rem;">
+          <video id="preview-video" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover; transform:scaleX(-1);"></video>
+          <div class="hud-overlay">
+            <div class="live-indicator">
+              <div class="live-dot"></div>
+              <span>PREVIEW</span>
+            </div>
+            <span id="face-status-badge" class="badge badge-warning">Calibrating...</span>
+          </div>
+        </div>
+
+        <!-- Audio Test Meter -->
+        <div style="margin-bottom: 1.25rem;">
+          <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.25rem; color:var(--text-secondary);">
+            <span>Microphone Sensitivity</span>
+            <span id="audio-db-text">Testing audio...</span>
+          </div>
+          <div class="audio-bar-bg" style="height: 8px;">
+            <div id="preview-audio-bar" class="audio-bar-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Checklist -->
+        <div style="background:#0f172a; border-radius:8px; padding: 1rem; border:1px solid var(--border-color);">
+          <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem; font-size:0.85rem;">
+            <span id="check-camera">⏳</span> <span>Webcam access granted</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem; font-size:0.85rem;">
+            <span id="check-mic">⏳</span> <span>Microphone input detected</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem;">
+            <span id="check-browser">✅</span> <span>Modern browser AI capabilities ready</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let localStream = null;
+    let audioCtx = null;
+    let analyser = null;
+
+    async function initHardware() {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        const video = document.getElementById("preview-video");
+        video.srcObject = localStream;
+        document.getElementById("check-camera").textContent = "✅";
+
+        // Setup Audio Analyser
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioCtx.createMediaStreamSource(localStream);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        const audioBar = document.getElementById("preview-audio-bar");
+        const audioDbText = document.getElementById("audio-db-text");
+
+        function updateAudio() {
+          analyser.getByteFrequencyData(dataArray);
+          let sum = 0;
+          for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+          const avg = sum / dataArray.length;
+          const pct = Math.min(100, Math.round((avg / 128) * 100));
+          audioBar.style.width = pct + "%";
+          audioDbText.textContent = pct > 5 ? "Microphone Active" : "Waiting for sound...";
+          if (pct > 5) document.getElementById("check-mic").textContent = "✅";
+          requestAnimationFrame(updateAudio);
+        }
+        updateAudio();
+
+        document.getElementById("face-status-badge").textContent = "Camera Ready";
+        document.getElementById("face-status-badge").className = "badge badge-success";
+      } catch (err) {
+        console.error(err);
+        document.getElementById("face-status-badge").textContent = "Camera/Mic Blocked";
+        document.getElementById("face-status-badge").className = "badge badge-danger";
+        document.getElementById("check-camera").textContent = "❌";
+        document.getElementById("check-mic").textContent = "❌";
+        alert("Please permit camera and microphone access to continue to the exam.");
+      }
+    }
+
+    initHardware();
+
+    document.getElementById("candidate-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("cand-name").value.trim();
+      const roll = document.getElementById("cand-roll").value.trim();
+      const email = document.getElementById("cand-email").value.trim();
+
+      if (!name || !roll) {
+        alert("Please enter your name and roll number.");
+        return;
+      }
+
+      const btn = document.getElementById("start-exam-btn");
+      btn.disabled = true;
+      btn.textContent = "Registering & Preparing Exam...";
+
+      try {
+        const res = await fetch("/api/exam/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name, roll_no: roll, email: email })
+        });
+        const data = await res.json();
+        if (data.session_id) {
+          // Attempt fullscreen before navigating
+          try {
+            await document.documentElement.requestFullscreen();
+          } catch (e) {
+            console.warn("Fullscreen deferred:", e);
+          }
+
+          // Release calibration stream
+          if (localStream) {
+            localStream.getTracks().forEach(t => t.stop());
+          }
+          if (audioCtx) {
+            audioCtx.close();
+          }
+
+          window.location.href = `/exam/${data.session_id}`;
+        }
+      } catch (err) {
+        alert("Failed to start session: " + err.message);
+        btn.disabled = false;
+        btn.textContent = "I Agree &bull; Launch Exam in Fullscreen";
+      }
+    });
+  </script>
+</body>
+</html>
